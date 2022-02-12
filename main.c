@@ -1,0 +1,82 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// colors
+#define COL_CYAN    "\x1b[36m"
+#define COL_MAGENTA "\x1b[35m"
+#define COL_BLUE    "\x1b[94m"
+#define COL_RED     "\x1b[31m"
+#define COL_GREEN   "\x1b[32m"
+#define COL_YELLOW  "\x1b[33m"
+#define COL_RESET   "\x1b[0m"
+#define COL_TEXT    COL_BLUE // used for text
+#define COL_LOGO    COL_RED // used for logo
+#define COL_BORDER  COL_RED // used for border
+
+// functions to pipe command output into string so we can print it out
+void parse(char *dest, char *cmd);
+void trim_left(char *dest, int amt);
+
+int main(void) {
+    // declared strings here for us to copy into
+    static char hostname[100];
+    static char os_release[100];
+    static char kernel[100];
+    static char packages[100];
+    static char memory_used[100], memory_total[100];
+    static char processor[100];
+    static char gpu[250]; // gpu name can be quite long, so i declared this one with a larger size
+    static char uptime[100];
+
+    // get hostname, os, kernel, etc.
+    parse(hostname,"echo $(whoami)@$(cat /etc/hostname)");
+    strcpy(os_release,"Arch Linux"); //FIXME
+    parse(kernel,"uname -r");
+    parse(packages,"pacman -Q | wc -l"); //FIXME
+    parse(memory_used,"free -mh --si | awk  {'print $3'} | head -n 2 | tail -1");
+    parse(memory_total,"free -mh --si | awk  {'print $2'} | head -n 2 | tail -1");
+    parse(processor,"cat /proc/cpuinfo | grep \"model name\" | tail -1"); trim_left(processor,13);
+    parse(gpu,"lspci | grep VGA"); trim_left(gpu,35);
+    parse(uptime,"uptime -p"); trim_left(uptime,3);
+    
+    // print it all out
+    printf(COL_LOGO"                         "COL_BORDER"                                "COL_RESET"\n");
+    printf(COL_LOGO"     #####     #####     "COL_BORDER"│"COL_TEXT" Hostname: "COL_RESET"%s\n",hostname);
+    printf(COL_LOGO"      #####   #####      "COL_BORDER"│"COL_TEXT" OS: "COL_RESET"Arch Linux\n"); //FIXME not everyone uses arch
+    printf(COL_LOGO"       ##### #####       "COL_BORDER"│"COL_TEXT" Kernel: "COL_RESET"%s\n",kernel); 
+    printf(COL_LOGO"        #########        "COL_BORDER"│"COL_TEXT" Packages: "COL_RESET"%s\n",packages); //FIXME not everyone uses arch
+    printf(COL_LOGO"        #########        "COL_BORDER"│"COL_TEXT" Memory: "COL_RESET"%s/%s\n",memory_used,memory_total);
+    printf(COL_LOGO"       ##### #####       "COL_BORDER"│"COL_TEXT" CPU: "COL_RESET"%s\n",processor);
+    printf(COL_LOGO"      #####   #####      "COL_BORDER"│"COL_TEXT" GPU: "COL_RESET"%s\n",gpu);
+    printf(COL_LOGO"     #####     #####     "COL_BORDER"│"COL_TEXT" Uptime: "COL_RESET"%s\n",uptime);
+    printf(COL_LOGO"                         "COL_BORDER"                                "COL_RESET"\n");
+}
+
+// function definitions
+void parse(char *dest, char *cmd) {
+    char c = 0;
+    FILE* tmp;
+
+    // popen exception
+    if (0 == (tmp = (FILE*)popen(cmd,"r"))) {
+        fprintf(stderr,"ERROR: popen(\"%s\",\"r\") failed.\n",cmd);
+        return;
+    }
+
+    // pipe everything into the string
+    int i;
+    for (i = 0; fread(&dest[i], sizeof(char), 1, tmp); i++) {
+        if (dest[i]=='\n') {
+            dest[i] = '\0';
+            return;
+        }
+    }
+    dest[i] = '\0';
+}
+
+void trim_left(char *dest, int amt) {
+    char *ptr = dest;
+    ptr += amt;
+    strcpy(dest,ptr);
+}
