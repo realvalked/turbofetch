@@ -17,6 +17,8 @@
 // functions to pipe command output into string so we can print it out
 void parse(char *dest, char *cmd);
 void trim_left(char *dest, int amt);
+void trim_right(char *dest, int amt);
+void get_os(char *os_release);
 
 int main(void) {
     // declared strings here for us to copy into
@@ -31,7 +33,7 @@ int main(void) {
 
     // get hostname, os, kernel, etc.
     parse(hostname,"echo $(whoami)@$(cat /etc/hostname)");
-    strcpy(os_release,"Arch Linux"); //FIXME
+    get_os(os_release);
     parse(kernel,"uname -r");
     parse(packages,"pacman -Q | wc -l"); //FIXME
     parse(memory_used,"free -mh --si | awk  {'print $3'} | head -n 2 | tail -1");
@@ -43,7 +45,7 @@ int main(void) {
     // print it all out
     printf(COL_LOGO"                         "COL_BORDER"                                "COL_RESET"\n");
     printf(COL_LOGO"     #####     #####     "COL_BORDER"│"COL_TEXT" Hostname: "COL_RESET"%s\n",hostname);
-    printf(COL_LOGO"      #####   #####      "COL_BORDER"│"COL_TEXT" OS: "COL_RESET"Arch Linux\n"); //FIXME not everyone uses arch
+    printf(COL_LOGO"      #####   #####      "COL_BORDER"│"COL_TEXT" OS: "COL_RESET"%s\n",os_release);
     printf(COL_LOGO"       ##### #####       "COL_BORDER"│"COL_TEXT" Kernel: "COL_RESET"%s\n",kernel); 
     printf(COL_LOGO"        #########        "COL_BORDER"│"COL_TEXT" Packages: "COL_RESET"%s\n",packages); //FIXME not everyone uses arch
     printf(COL_LOGO"        #########        "COL_BORDER"│"COL_TEXT" Memory: "COL_RESET"%s/%s\n",memory_used,memory_total);
@@ -79,4 +81,16 @@ void trim_left(char *dest, int amt) {
     char *ptr = dest;
     ptr += amt;
     strcpy(dest,ptr);
+}
+
+void trim_right(char *dest, int amt) {
+    char *ptr = strchr(dest,0);
+    ptr -= amt;
+    *ptr = 0;
+}
+
+void get_os(char *os_release) {
+    parse(os_release,"cat /etc/os-release | grep NAME | head -1");
+    trim_left(os_release,6);
+    trim_right(os_release,1);
 }
