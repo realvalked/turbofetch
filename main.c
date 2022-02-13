@@ -45,16 +45,16 @@ int main(void) {
     parse(uptime,"uptime -p"); trim_left(uptime,3);
     
     // print it all out
-    printf(COL_LOGO"                         "COL_BORDER"                                "COL_RESET"\n");
+    printf("\n");
     printf(COL_LOGO"     #####     #####     "COL_BORDER"│"COL_TEXT" Hostname: "COL_RESET"%s\n",hostname);
     printf(COL_LOGO"      #####   #####      "COL_BORDER"│"COL_TEXT" OS: "COL_RESET"%s\n",os_release);
     printf(COL_LOGO"       ##### #####       "COL_BORDER"│"COL_TEXT" Kernel: "COL_RESET"%s\n",kernel); 
-    printf(COL_LOGO"        #########        "COL_BORDER"│"COL_TEXT" Packages: "COL_RESET"%s\n",packages); //FIXME not everyone uses arch
+    printf(COL_LOGO"        #########        "COL_BORDER"│"COL_TEXT" Packages: "COL_RESET"%s\n",packages);
     printf(COL_LOGO"        #########        "COL_BORDER"│"COL_TEXT" Memory: "COL_RESET"%s/%s\n",memory_used,memory_total);
     printf(COL_LOGO"       ##### #####       "COL_BORDER"│"COL_TEXT" CPU: "COL_RESET"%s\n",processor);
     printf(COL_LOGO"      #####   #####      "COL_BORDER"│"COL_TEXT" GPU: "COL_RESET"%s\n",gpu);
     printf(COL_LOGO"     #####     #####     "COL_BORDER"│"COL_TEXT" Uptime: "COL_RESET"%s\n",uptime);
-    printf(COL_LOGO"                         "COL_BORDER"                                "COL_RESET"\n");
+    printf("\n");
 }
 
 // function definitions
