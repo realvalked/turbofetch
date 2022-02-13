@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 // colors
 #define COL_CYAN    "\x1b[36m"
@@ -19,6 +20,7 @@ void parse(char *dest, char *cmd);
 void trim_left(char *dest, int amt);
 void trim_right(char *dest, int amt);
 void get_os(char *os_release);
+void get_packages(char *packages);
 
 int main(void) {
     // declared strings here for us to copy into
@@ -35,7 +37,7 @@ int main(void) {
     parse(hostname,"echo $(whoami)@$(cat /etc/hostname)");
     get_os(os_release);
     parse(kernel,"uname -r");
-    parse(packages,"pacman -Q | wc -l"); //FIXME
+    get_packages(packages);
     parse(memory_used,"free -mh --si | awk  {'print $3'} | head -n 2 | tail -1");
     parse(memory_total,"free -mh --si | awk  {'print $2'} | head -n 2 | tail -1");
     parse(processor,"cat /proc/cpuinfo | grep \"model name\" | tail -1"); trim_left(processor,13);
@@ -93,4 +95,31 @@ void get_os(char *os_release) {
     parse(os_release,"cat /etc/os-release | grep NAME | head -1");
     trim_left(os_release,6);
     trim_right(os_release,1);
+}
+
+void get_packages(char *packages) {
+    if (access("/bin/pacman",R_OK)==0) {
+        parse(packages,"pacman -Q | wc -l");
+        return;
+    }
+    if (access("/bin/dpkg",R_OK)==0) {
+        parse(packages,"dpkg-query -f '${binary:Package}\\n' -W | wc -l");
+        return;
+    }
+    if (access("/bin/rpm",R_OK)==0) {
+        parse(packages,"rpm -qa | wc -l");
+        return;
+    }
+    if (access("/bin/yum",R_OK)==0) {
+        parse(packages,"yum list installed | wc -l");
+        return;
+    }
+    if (access("/bin/dnf",R_OK)==0) {
+        parse(packages,"dnf list installed | wc -l");
+        return;
+    }
+    if (access("/bin/eopkg",R_OK)==0) {
+        parse(packages,"eopkg li -i | wc -l");
+        return;
+    }
 }
