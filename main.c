@@ -44,7 +44,7 @@ int main(void) {
     // number of threads
     pthread_t thr;
 
-    // get hostname, os, kernel, etc.
+    // get hostname, os, kernel, etc. simultaneously via multithreading
     pthread_create(&thr,NULL,get_hostname,NULL);
     pthread_create(&thr,NULL,get_os,NULL);
     pthread_create(&thr,NULL,get_kernel,NULL);
@@ -53,19 +53,20 @@ int main(void) {
     pthread_create(&thr,NULL,get_memory_total,NULL);
     pthread_create(&thr,NULL,get_processor,NULL);
     pthread_create(&thr,NULL,get_gpu,NULL);
+    pthread_join(thr,NULL); // wait for the most time-consuming threads, this way we can finish running the script as quickly as possible
     pthread_create(&thr,NULL,get_uptime,NULL);
-    system("sleep 0.03");
+    pthread_join(thr,NULL); // wait for the most time-consuming threads, this way we can finish running the script as quickly as possible
     
     // print it all out
     printf("\n");
-    printf(COL_LOGO"     #####     #####     "COL_BORDER"│"COL_TEXT" Hostname: "COL_RESET"%s\n",hostname);
-    printf(COL_LOGO"      #####   #####      "COL_BORDER"│"COL_TEXT" OS: "      COL_RESET"%s\n",os_release);
-    printf(COL_LOGO"       ##### #####       "COL_BORDER"│"COL_TEXT" Kernel: "  COL_RESET"%s\n",kernel); 
-    printf(COL_LOGO"        #########        "COL_BORDER"│"COL_TEXT" Packages: "COL_RESET"%s\n",packages);
-    printf(COL_LOGO"        #########        "COL_BORDER"│"COL_TEXT" Memory: "  COL_RESET"%s/%s\n",memory_used,memory_total);
-    printf(COL_LOGO"       ##### #####       "COL_BORDER"│"COL_TEXT" CPU: "     COL_RESET"%s\n",processor);
-    printf(COL_LOGO"      #####   #####      "COL_BORDER"│"COL_TEXT" GPU: "     COL_RESET"%s\n",gpu);
-    printf(COL_LOGO"     #####     #####     "COL_BORDER"│"COL_TEXT" Uptime: "  COL_RESET"%s\n",uptime);
+    printf(COL_LOGO "     #####     #####     " COL_BORDER "│" COL_TEXT " Hostname: "   COL_RESET    "%s\n",hostname);
+    printf(COL_LOGO "      #####   #####      " COL_BORDER "│" COL_TEXT " OS: "         COL_RESET    "%s\n",os_release);
+    printf(COL_LOGO "       ##### #####       " COL_BORDER "│" COL_TEXT " Kernel: "     COL_RESET    "%s\n",kernel); 
+    printf(COL_LOGO "        #########        " COL_BORDER "│" COL_TEXT " Packages: "   COL_RESET    "%s\n",packages);
+    printf(COL_LOGO "        #########        " COL_BORDER "│" COL_TEXT " Memory: "     COL_RESET "%s/%s\n",memory_used,memory_total);
+    printf(COL_LOGO "       ##### #####       " COL_BORDER "│" COL_TEXT " CPU: "        COL_RESET    "%s\n",processor);
+    printf(COL_LOGO "      #####   #####      " COL_BORDER "│" COL_TEXT " GPU: "        COL_RESET    "%s\n",gpu);
+    printf(COL_LOGO "     #####     #####     " COL_BORDER "│" COL_TEXT " Uptime: "     COL_RESET    "%s\n",uptime);
     printf("\n");
 }
 
