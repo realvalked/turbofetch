@@ -39,24 +39,21 @@ void get_memory_total(void);
 void get_processor(void);
 void get_gpu(void);
 void get_uptime(void);
+void get_info(int varg);
 
 int main(void) {
     // number of threads
-    pthread_t thr;
+    pthread_t thr[10];
 
     // get hostname, os, kernel, etc. simultaneously via multithreading
-    pthread_create(&thr,NULL,get_hostname,NULL);
-    pthread_create(&thr,NULL,get_os,NULL);
-    pthread_create(&thr,NULL,get_kernel,NULL);
-    pthread_create(&thr,NULL,get_packages,NULL);
-    pthread_create(&thr,NULL,get_memory_used,NULL);
-    pthread_create(&thr,NULL,get_memory_total,NULL);
-    pthread_create(&thr,NULL,get_processor,NULL);
-    pthread_create(&thr,NULL,get_gpu,NULL);
-    pthread_join(thr,NULL); // wait for the most time-consuming threads, this way we can finish running the script as quickly as possible
-    pthread_create(&thr,NULL,get_uptime,NULL);
-    pthread_join(thr,NULL); // wait for the most time-consuming threads, this way we can finish running the script as quickly as possible
-    
+    for (int i = 0; i < 9; i++) {
+        pthread_create(&thr[i],NULL,get_info,i);
+    }
+
+    // wait only for the most time-consuming threads, this way we can finish running the script as quickly as possible
+    pthread_join(thr[3],NULL);
+    pthread_join(thr[7],NULL);
+
     // print it all out
     printf("\n");
     printf(COL_LOGO "     #####     #####     " COL_BORDER "│" COL_TEXT " Hostname: "   COL_RESET    "%s\n",hostname);
@@ -102,6 +99,38 @@ void trim_right(char *dest, int amt) {
     char *ptr = strchr(dest,0);
     ptr -= amt;
     *ptr = 0;
+}
+
+void get_info(int varg) {
+    switch(varg) {
+        case 0:
+            get_hostname();
+            break;
+        case 1:
+            get_os();
+            break;
+        case 2:
+            get_kernel();
+            break;
+        case 3:
+            get_packages();
+            break;
+        case 4:
+            get_memory_used();
+            break;
+        case 5:
+            get_memory_total();
+            break;
+        case 6:
+            get_processor();
+            break;
+        case 7:
+            get_gpu();
+            break;
+        case 8:
+            get_uptime();
+            break;
+    }
 }
 
 void get_hostname(void) {
