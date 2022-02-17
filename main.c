@@ -51,8 +51,11 @@ int main(void) {
     }
 
     // wait only for the most time-consuming threads, this way we can finish running the script as quickly as possible
-    pthread_join(thr[3],NULL);
-    pthread_join(thr[7],NULL);
+    for (int i = 0; i < 9; i++) {
+        pthread_join(thr[i],NULL);
+    }
+    //pthread_join(thr[3],NULL);
+    //pthread_join(thr[7],NULL);
 
     // print it all out
     printf("\n");
@@ -99,38 +102,6 @@ void trim_right(char *dest, int amt) {
     char *ptr = strchr(dest,0);
     ptr -= amt;
     *ptr = 0;
-}
-
-void get_info(int varg) {
-    switch(varg) {
-        case 0:
-            get_hostname();
-            break;
-        case 1:
-            get_os();
-            break;
-        case 2:
-            get_kernel();
-            break;
-        case 3:
-            get_packages();
-            break;
-        case 4:
-            get_memory_used();
-            break;
-        case 5:
-            get_memory_total();
-            break;
-        case 6:
-            get_processor();
-            break;
-        case 7:
-            get_gpu();
-            break;
-        case 8:
-            get_uptime();
-            break;
-    }
 }
 
 void get_hostname(void) {
@@ -192,4 +163,36 @@ void get_gpu(void) {
 
 void get_uptime(void) {
     parse(uptime,"uptime -p"); trim_left(uptime,3);
+}
+
+void get_info(int varg) {
+    switch(varg) {
+        case 0:
+            get_hostname();
+            break;
+        case 1:
+            get_os();
+            break;
+        case 2:
+            get_kernel();
+            break;
+        case 3:
+            get_packages();
+            break;
+        case 4:
+            get_memory_used();
+            break;
+        case 5:
+            get_memory_total();
+            break;
+        case 6:
+            get_processor();
+            break;
+        case 7:
+            get_gpu();
+            break;
+        case 8:
+            get_uptime();
+            break;
+    }
 }
