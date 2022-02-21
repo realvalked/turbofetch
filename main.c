@@ -59,15 +59,17 @@ int main(void) {
 
     // print it all out
     printf("\n");
-    printf(COL_LOGO "     #####     #####     " COL_BORDER "│" COL_TEXT " Hostname: "   COL_RESET    "%s\n",hostname);
-    printf(COL_LOGO "      #####   #####      " COL_BORDER "│" COL_TEXT " OS: "         COL_RESET    "%s\n",os_release);
-    printf(COL_LOGO "       ##### #####       " COL_BORDER "│" COL_TEXT " Kernel: "     COL_RESET    "%s\n",kernel); 
-    printf(COL_LOGO "        #########        " COL_BORDER "│" COL_TEXT " Packages: "   COL_RESET    "%s\n",packages);
-    printf(COL_LOGO "        #########        " COL_BORDER "│" COL_TEXT " Memory: "     COL_RESET "%s/%s\n",memory_used,memory_total);
-    printf(COL_LOGO "       ##### #####       " COL_BORDER "│" COL_TEXT " CPU: "        COL_RESET    "%s\n",processor);
-    printf(COL_LOGO "      #####   #####      " COL_BORDER "│" COL_TEXT " GPU: "        COL_RESET    "%s\n",gpu);
-    printf(COL_LOGO "     #####     #####     " COL_BORDER "│" COL_TEXT " Uptime: "     COL_RESET    "%s\n",uptime);
+    printf(COL_LOGO "    #####   #####       " COL_BORDER "│" COL_TEXT " Hostname: "   COL_RESET    "%s\n",hostname);
+    printf(COL_LOGO "     #####   #####      " COL_BORDER "│" COL_TEXT " OS: "         COL_RESET    "%s\n",os_release);
+    printf(COL_LOGO "      #####   #####     " COL_BORDER "│" COL_TEXT " Kernel: "     COL_RESET    "%s\n",kernel); 
+    printf(COL_LOGO "       #####   #####    " COL_BORDER "│" COL_TEXT " Packages: "   COL_RESET    "%s\n",packages);
+    printf(COL_LOGO "       #####   #####    " COL_BORDER "│" COL_TEXT " Memory: "     COL_RESET "%s/%s\n",memory_used,memory_total);
+    printf(COL_LOGO "      #####   #####     " COL_BORDER "│" COL_TEXT " CPU: "        COL_RESET    "%s\n",processor);
+    printf(COL_LOGO "     #####   #####      " COL_BORDER "│" COL_TEXT " GPU: "        COL_RESET    "%s\n",gpu);
+    printf(COL_LOGO "    #####   #####       " COL_BORDER "│" COL_TEXT " Uptime: "     COL_RESET    "%s\n",uptime);
     printf("\n");
+
+    return 0;
 }
 
 // function definitions
@@ -159,6 +161,10 @@ void get_processor(void) {
 
 void get_gpu(void) {
     parse(gpu,"lspci | grep VGA"); trim_left(gpu,35);
+    if (strstr(gpu,"Advanced Micro Devices, Inc. ")!=NULL) {
+        trim_left(gpu,29);
+        trim_right(gpu,9);
+    }
 }
 
 void get_uptime(void) {
