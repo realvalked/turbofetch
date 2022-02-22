@@ -13,7 +13,7 @@ Turbofetch is also very customizable. You can change its colours in the main.c f
 The building process is very simple:
 
 ```
-gcc main.c -o turbofetch -O2 -lpthread
+gcc main.c -o turbofetch -O2 -lpthread -lpci
 sudo mv turbofetch /usr/bin/
 ```
 
