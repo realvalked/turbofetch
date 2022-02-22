@@ -23,7 +23,7 @@ Neofetch loaded in about 0.180s. **That's pretty slow!** We can do better than t
 
 Using [Minifetch](https://github.com/RohanKP1/minifetch), we get results that are a lot better than those of Neofetch, loading in about 0.056s. That's very good, **but we can do even better, while fetching additional information!**
 
-Using [Turbofetch](https://github.com/xnqs/turbofetch/), we get results even better than those of Minifetch! It loads in about ~~0.047s~~ **with multithreading it actually runs in 0.015s!!!**. Keep in mind, that Turbofetch fetches more information than Minifetch. If we turn those off, the script loads in about 0.030s!
+Using [Turbofetch](https://github.com/xnqs/turbofetch/), we get results even better than those of Minifetch! It loads in about ~~0.047s~~ **with multithreading it actually runs in 0.009s!!!**. Keep in mind, that Turbofetch fetches more information than Minifetch. If we turn those off, the script loads in about 0.030s!
 
 ## Conclusion
 

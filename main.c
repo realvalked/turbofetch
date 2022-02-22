@@ -2,7 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <dirent.h>
 #include <pthread.h>
+#include <pci/pci.h>
 
 // colors
 #define COL_CYAN    "\x1b[36m"
@@ -34,6 +36,7 @@ void get_hostname(void);
 void get_os(void);
 void get_kernel(void);
 void get_packages(void);
+void get_packages_pacman(void);
 void get_memory_used(void);
 void get_memory_total(void);
 void get_processor(void);
@@ -120,9 +123,29 @@ void get_kernel(void) {
     parse(kernel,"uname -r");
 }
 
+void get_packages_pacman(void) {
+    int c=0;
+    struct dirent* dp;
+    DIR* fd;
+
+    if ((fd = opendir("/var/lib/pacman/local")) == NULL) {
+        fprintf(stderr, "Error opening /var/lib/pacman/local\n");
+        return;
+    }
+
+    while ((dp = readdir(fd)) != NULL) {
+        if (!strcmp(dp->d_name,".") || !strcmp(dp->d_name, "..")) continue;
+        c++;
+    }
+
+    closedir(fd);
+
+    snprintf(packages,10,"%d",c);
+}
+
 void get_packages(void) {
     if (access("/bin/pacman",R_OK)==0) {
-        parse(packages,"pacman -Q | wc -l");
+        get_packages_pacman();
         return;
     }
     if (access("/bin/dpkg",R_OK)==0) {
@@ -160,10 +183,30 @@ void get_processor(void) {
 }
 
 void get_gpu(void) {
-    parse(gpu,"lspci | grep VGA"); trim_left(gpu,35);
+    char buf[250], *device_class;
+
+    struct pci_access *pacc;
+    struct pci_dev *dev;
+    
+    pacc = pci_alloc();
+    pci_init(pacc);
+    pci_scan_bus(pacc);
+    dev = pacc->devices;
+
+    while (dev!=NULL) {
+        pci_fill_info(dev, PCI_FILL_IDENT | PCI_FILL_CLASS);
+        device_class = pci_lookup_name(pacc, buf, sizeof(buf), PCI_LOOKUP_CLASS, dev->device_class);
+        if (strcmp("VGA compatible controller", device_class)==0 || strcmp("3D controller", device_class)==0) {
+            strncpy(gpu, pci_lookup_name(pacc, buf, sizeof(buf), PCI_LOOKUP_DEVICE | PCI_LOOKUP_VENDOR, dev->vendor_id, dev->device_id), 250);
+            break;
+        }
+        dev = dev->next;
+    }
+
+    pci_cleanup(pacc);
+
     if (strstr(gpu,"Advanced Micro Devices, Inc. ")!=NULL) {
         trim_left(gpu,29);
-        trim_right(gpu,9);
     }
 }
 
