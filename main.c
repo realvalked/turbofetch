@@ -114,7 +114,7 @@ void get_hostname(void) {
 }
 
 void get_os(void) {
-    parse(os_release,"cat /etc/os-release | grep NAME | head -1");
+    parse(os_release,"grep NAME /etc/os-release | head -1");
     trim_left(os_release,6);
     trim_right(os_release,1);
 }
@@ -179,7 +179,7 @@ void get_memory_total(void) {
 }
 
 void get_processor(void) {
-    parse(processor,"cat /proc/cpuinfo | grep \"model name\" | tail -1"); trim_left(processor,13);
+    parse(processor,"grep \"model name\" /proc/cpuinfo | tail -1"); trim_left(processor,13);
 }
 
 void get_gpu(void) {
