@@ -24,6 +24,7 @@ static char os_release[100];
 static char kernel[100];
 static char packages[100];
 static char memory_used[100], memory_total[100];
+static char swap_used[100], swap_total[100];
 static char processor[100];
 static char gpu[250]; // gpu name can be quite long, so i declared this one with a larger size
 static char uptime[100];
@@ -38,6 +39,7 @@ void get_kernel(void);
 void get_packages(void);
 void get_packages_pacman(void);
 void get_memory(void);
+void get_swap(void);
 void get_processor(void);
 void get_gpu(void);
 void get_uptime(void);
@@ -45,28 +47,29 @@ void get_info(int varg);
 
 int main(void) {
     // number of threads
-    pthread_t thr[8];
+    pthread_t thr[9];
 
     // get hostname, os, kernel, etc. simultaneously via multithreading
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 9; i++) {
         pthread_create(&thr[i],NULL,get_info,i);
     }
 
     // wait only for the most time-consuming threads, this way we can finish running the script as quickly as possible
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 9; i++) {
         pthread_join(thr[i],NULL);
     }
 
     // print it all out
     printf("\n");
-    printf(COL_LOGO "    #####   #####       " COL_BORDER "│" COL_TEXT " Hostname: "   COL_RESET    "%s\n",hostname);
-    printf(COL_LOGO "     #####   #####      " COL_BORDER "│" COL_TEXT " OS: "         COL_RESET    "%s\n",os_release);
-    printf(COL_LOGO "      #####   #####     " COL_BORDER "│" COL_TEXT " Kernel: "     COL_RESET    "%s\n",kernel); 
-    printf(COL_LOGO "       #####   #####    " COL_BORDER "│" COL_TEXT " Packages: "   COL_RESET    "%s\n",packages);
-    printf(COL_LOGO "       #####   #####    " COL_BORDER "│" COL_TEXT " Memory: "     COL_RESET "%s/%s\n",memory_used,memory_total);
-    printf(COL_LOGO "      #####   #####     " COL_BORDER "│" COL_TEXT " CPU: "        COL_RESET    "%s\n",processor);
-    printf(COL_LOGO "     #####   #####      " COL_BORDER "│" COL_TEXT " GPU: "        COL_RESET    "%s\n",gpu);
-    printf(COL_LOGO "    #####   #####       " COL_BORDER "│" COL_TEXT " Uptime: "     COL_RESET    "%s\n",uptime);
+    printf(COL_LOGO "    #####   #####        " COL_BORDER "│" COL_TEXT " Hostname: "   COL_RESET    "%s\n",hostname);
+    printf(COL_LOGO "     #####   #####       " COL_BORDER "│" COL_TEXT " OS: "         COL_RESET    "%s\n",os_release);
+    printf(COL_LOGO "      #####   #####      " COL_BORDER "│" COL_TEXT " Kernel: "     COL_RESET    "%s\n",kernel); 
+    printf(COL_LOGO "       #####   #####     " COL_BORDER "│" COL_TEXT " Packages: "   COL_RESET    "%s\n",packages);
+    printf(COL_LOGO "        #####   #####    " COL_BORDER "│" COL_TEXT " Memory: "     COL_RESET "%s/%s\n",memory_used,memory_total);
+    printf(COL_LOGO "       #####   #####     " COL_BORDER "│" COL_TEXT " Swap/ZRAM: "  COL_RESET "%s/%s\n",swap_used,swap_total);
+    printf(COL_LOGO "      #####   #####      " COL_BORDER "│" COL_TEXT " CPU: "        COL_RESET    "%s\n",processor);
+    printf(COL_LOGO "     #####   #####       " COL_BORDER "│" COL_TEXT " GPU: "        COL_RESET    "%s\n",gpu);
+    printf(COL_LOGO "    #####   #####        " COL_BORDER "│" COL_TEXT " Uptime: "     COL_RESET    "%s\n",uptime);
     printf("\n");
 
     return 0;
@@ -244,6 +247,35 @@ void get_memory(void) {
     fclose(meminfo);
 }
 
+void get_swap(void) {
+    FILE* meminfo;
+    if (0 == (meminfo = fopen("/proc/meminfo","r"))) {
+        fprintf(stderr,"Failed to open /proc/meminfo\n");
+        return;
+    }
+
+    int swp_used_mb, swp_total_mb;
+    char str[100];
+
+    while (fgets(str,99,meminfo)!=NULL) {
+        char *ptr = str;
+        if (strstr(str,"SwapTotal")!=NULL) {
+            while (!(*ptr>='0'&&*ptr<='9')) ++ptr;
+            trim_right(ptr,4);
+            swp_total_mb = atoi(ptr)/1024;
+            snprintf(swap_total,100,"%dMB\0",swp_total_mb);
+        }
+        if (strstr(str,"SwapFree")!=NULL) {
+            while (!(*ptr>='0'&&*ptr<='9')) ++ptr;
+            trim_right(ptr,4);
+            swp_used_mb = swp_total_mb-atoi(ptr)/1024;
+            snprintf(swap_used,100,"%dMB\0",swp_used_mb);
+        }
+    }
+
+    fclose(meminfo);
+}
+
 void get_processor(void) {
     FILE* cpuinfo;
     if (0 == (cpuinfo = fopen("/proc/cpuinfo","r"))) {
@@ -342,12 +374,15 @@ void get_info(int varg) {
             get_memory();
             break;
         case 5:
-            get_processor();
+            get_swap();
             break;
         case 6:
-            get_gpu();
+            get_processor();
             break;
         case 7:
+            get_gpu();
+            break;
+        case 8:
             get_uptime();
             break;
     }
