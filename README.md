@@ -1,6 +1,6 @@
 # Turbofetch: Lightning fast and sleek fetch script for Linux ⚡
 
-![alt text](https://i.imgur.com/BZXSHPF.png)
+![image preview](https://i.imgur.com/nUtwIzS.png)
 
 This project started as a way to learn how to pipe command output into a C string. And, of course, growing tired of Neofetch's slowness. Not to mention the absolute behemoth that is Screenfetch (who even uses that anymore?). The ending result, I'd say, is pretty nice.
 
