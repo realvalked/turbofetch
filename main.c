@@ -109,13 +109,30 @@ void trim_right(char *dest, int amt) {
 }
 
 void get_hostname(void) {
-    parse(hostname,"echo $(whoami)@$(cat /etc/hostname)");
+    snprintf(hostname,100,"%s@",getenv("USER"));
+    
+    FILE* f_hostname;
+    if (0 == (f_hostname = fopen("/etc/hostname","r"))) {
+        fprintf(stderr,"Failed to open /etc/hostname\n");
+        return;
+    }
+
+    char tmp[100];
+    fscanf(f_hostname,"%s",tmp);
+
+    strncat(hostname,tmp,100-strlen(hostname));
+
+    fclose(f_hostname);
 }
 
 void get_os(void) {
-    FILE* f_os_release = fopen("/etc/os-release", "r");
+    FILE* f_os_release;
+    if (0 == (f_os_release = fopen("/etc/os-release","r"))) {
+        fprintf(stderr,"Failed to open /etc/os-release\n");
+        return;
+    }
+    
     char str[100], *ptr = str;
-
     while (fgets(str,100,f_os_release)!=NULL) {
         if (strstr(ptr,"NAME=\"")!=NULL) {
             ptr += 6;
@@ -132,7 +149,23 @@ void get_os(void) {
 }
 
 void get_kernel(void) {
-    parse(kernel,"uname -r");
+    FILE* f_version;
+    if (0 == (f_version = fopen("/proc/version","r"))) {
+        fprintf(stderr,"Failed to open /proc/version\n");
+        return;
+    }
+    
+    char str[100], *ptr = str;
+    fgets(str,99,f_version);
+
+    ptr += 14;
+    char* end = ptr;
+    while (*end>32&&*end<127) ++end;
+    *end = 0;
+
+    strcpy(kernel,ptr);
+
+    fclose(f_version);
 }
 
 void get_packages_pacman(void) {
@@ -183,7 +216,11 @@ void get_packages(void) {
 }
 
 void get_memory(void) {
-    FILE* meminfo = fopen("/proc/meminfo","r");
+    FILE* meminfo;
+    if (0 == (meminfo = fopen("/proc/meminfo","r"))) {
+        fprintf(stderr,"Failed to open /proc/meminfo\n");
+        return;
+    }
 
     int mem_used_mb, mem_total_mb;
     char str[100];
@@ -208,7 +245,11 @@ void get_memory(void) {
 }
 
 void get_processor(void) {
-    FILE* cpuinfo = fopen("/proc/cpuinfo","r");
+    FILE* cpuinfo;
+    if (0 == (cpuinfo = fopen("/proc/cpuinfo","r"))) {
+        fprintf(stderr,"Failed to open /proc/cpuinfo\n");
+        return;
+    }
 
     char str[100], *ptr = str;
     while (fgets(str,100,cpuinfo)!=NULL) {
@@ -256,7 +297,11 @@ void get_gpu(void) {
 }
 
 void get_uptime(void) {
-    FILE* f_uptime = fopen("/proc/uptime","r");
+    FILE* f_uptime;
+    if (0 == (f_uptime = fopen("/proc/uptime","r"))) {
+        fprintf(stderr,"Failed to open /proc/uptime\n");
+        return;
+    }
     double total_seconds_up;
 
     fscanf(f_uptime,"%lf",&total_seconds_up);
@@ -266,9 +311,14 @@ void get_uptime(void) {
                              (int)total_seconds_up/60/60/24,(int)total_seconds_up/60/60,(int)total_seconds_up/60%60);
     }
 
-    else {
+    else if (total_seconds_up>=3600) {
         snprintf(uptime,100,"%d hours, %d minutes",
                              (int)total_seconds_up/60/60,(int)total_seconds_up/60%60);
+    }
+
+    else {
+        snprintf(uptime,100,"%d minutes",
+                             (int)total_seconds_up/60%60);
     }
 
     fclose(f_uptime);
