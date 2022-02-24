@@ -37,8 +37,7 @@ void get_os(void);
 void get_kernel(void);
 void get_packages(void);
 void get_packages_pacman(void);
-void get_memory_used(void);
-void get_memory_total(void);
+void get_memory(void);
 void get_processor(void);
 void get_gpu(void);
 void get_uptime(void);
@@ -46,19 +45,17 @@ void get_info(int varg);
 
 int main(void) {
     // number of threads
-    pthread_t thr[10];
+    pthread_t thr[8];
 
     // get hostname, os, kernel, etc. simultaneously via multithreading
-    for (int i = 0; i < 9; i++) {
+    for (int i = 0; i < 8; i++) {
         pthread_create(&thr[i],NULL,get_info,i);
     }
 
     // wait only for the most time-consuming threads, this way we can finish running the script as quickly as possible
-    for (int i = 0; i < 9; i++) {
+    for (int i = 0; i < 8; i++) {
         pthread_join(thr[i],NULL);
     }
-    //pthread_join(thr[3],NULL);
-    //pthread_join(thr[7],NULL);
 
     // print it all out
     printf("\n");
@@ -95,6 +92,8 @@ void parse(char *dest, char *cmd) {
         }
     }
     dest[i] = '\0';
+
+    fclose(tmp);
 }
 
 void trim_left(char *dest, int amt) {
@@ -114,9 +113,22 @@ void get_hostname(void) {
 }
 
 void get_os(void) {
-    parse(os_release,"grep NAME /etc/os-release | head -1");
-    trim_left(os_release,6);
-    trim_right(os_release,1);
+    FILE* f_os_release = fopen("/etc/os-release", "r");
+    char str[100], *ptr = str;
+
+    while (fgets(str,100,f_os_release)!=NULL) {
+        if (strstr(ptr,"NAME=\"")!=NULL) {
+            ptr += 6;
+            char *end = strchr(ptr,0);
+            end-=2;
+            *end = 0;
+            strcpy(os_release,ptr);
+            fclose(f_os_release);
+            return;
+        }
+    }
+
+    fclose(f_os_release);
 }
 
 void get_kernel(void) {
@@ -170,16 +182,49 @@ void get_packages(void) {
     }
 }
 
-void get_memory_used(void) {
-    parse(memory_used,"free -mh --si | awk  {'print $3'} | head -n 2 | tail -1");
-}
+void get_memory(void) {
+    FILE* meminfo = fopen("/proc/meminfo","r");
 
-void get_memory_total(void) {
-    parse(memory_total,"free -mh --si | awk  {'print $2'} | head -n 2 | tail -1");
+    int mem_used_mb, mem_total_mb;
+    char str[100];
+
+    while (fgets(str,99,meminfo)!=NULL) {
+        char *ptr = str;
+        if (strstr(str,"MemTotal")!=NULL) {
+            while (!(*ptr>='0'&&*ptr<='9')) ++ptr;
+            trim_right(ptr,4);
+            mem_total_mb = atoi(ptr)/1024;
+            snprintf(memory_total,100,"%dMB\0",mem_total_mb);
+        }
+        if (strstr(str,"MemAvailable")!=NULL) {
+            while (!(*ptr>='0'&&*ptr<='9')) ++ptr;
+            trim_right(ptr,4);
+            mem_used_mb = mem_total_mb-atoi(ptr)/1024;
+            snprintf(memory_used,100,"%dMB\0",mem_used_mb);
+        }
+    }
+
+    fclose(meminfo);
 }
 
 void get_processor(void) {
-    parse(processor,"grep \"model name\" /proc/cpuinfo | tail -1"); trim_left(processor,13);
+    FILE* cpuinfo = fopen("/proc/cpuinfo","r");
+
+    char str[100], *ptr = str;
+    while (fgets(str,100,cpuinfo)!=NULL) {
+        if (strstr(str,"model name")!=NULL) {
+            ptr += 10;
+            while (*ptr==' '||*ptr==':'||*ptr=='\t') ++ptr;
+            char* end = strchr(ptr,0);
+            --end;
+            *end = 0;
+            strncpy(processor,ptr,100);
+            fclose(cpuinfo);
+            return;
+        }
+    }
+
+    fclose(cpuinfo);
 }
 
 void get_gpu(void) {
@@ -211,7 +256,22 @@ void get_gpu(void) {
 }
 
 void get_uptime(void) {
-    parse(uptime,"uptime -p"); trim_left(uptime,3);
+    FILE* f_uptime = fopen("/proc/uptime","r");
+    double total_seconds_up;
+
+    fscanf(f_uptime,"%lf",&total_seconds_up);
+
+    if (total_seconds_up>=86400) {
+        snprintf(uptime,100,"%d days, %d hours, %d minutes",
+                             (int)total_seconds_up/60/60/24,(int)total_seconds_up/60/60,(int)total_seconds_up/60%60);
+    }
+
+    else {
+        snprintf(uptime,100,"%d hours, %d minutes",
+                             (int)total_seconds_up/60/60,(int)total_seconds_up/60%60);
+    }
+
+    fclose(f_uptime);
 }
 
 void get_info(int varg) {
@@ -229,18 +289,15 @@ void get_info(int varg) {
             get_packages();
             break;
         case 4:
-            get_memory_used();
+            get_memory();
             break;
         case 5:
-            get_memory_total();
-            break;
-        case 6:
             get_processor();
             break;
-        case 7:
+        case 6:
             get_gpu();
             break;
-        case 8:
+        case 7:
             get_uptime();
             break;
     }
