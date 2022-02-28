@@ -4,7 +4,9 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <pthread.h>
+#include <sys/stat.h>
 #include <pci/pci.h>
+#include <errno.h>
 
 // colors
 #define COL_CYAN    "\x1b[36m"
@@ -30,6 +32,8 @@ static char gpu[250]; // gpu name can be quite long, so i declared this one with
 static char uptime[100];
 
 // functions to pipe command output into string so we can print it out
+int folder_exists(char *filepath);
+int file_exists(char *filepath);
 void parse(char *dest, char *cmd);
 void trim_left(char *dest, int amt);
 void trim_right(char *dest, int amt);
@@ -77,6 +81,37 @@ int main(void) {
 }
 
 // function definitions
+
+int folder_exists(char *filepath) {
+	DIR* tmp = opendir(filepath);
+
+	if (tmp) {
+		return 1;
+	}
+	else if (ENOENT == errno) {
+		if (mkdir(filepath,0777) == -1) {
+			fprintf(stderr,"Error accessing directory at: %d (%s)"
+				,filepath,errno);
+			return 0;
+		}
+		else return 1;
+	}
+	else {
+		fprintf(stderr,"Error accessing directory at: %d (%s)"
+			,filepath,errno);
+		return 0;
+	}
+}
+
+int file_exists(char *filepath) {
+	FILE* tmp;
+	if (tmp = fopen(filepath,"r")) {
+		fclose(tmp);
+		return 1;
+	}
+	else return 0;
+}
+
 void parse(char *dest, char *cmd) {
     char c = 0;
     FILE* tmp;
@@ -302,6 +337,18 @@ void get_processor(void) {
 }
 
 void get_gpu(void) {
+	char cache_path[696];
+
+	strcat(cache_path,getenv("HOME"));
+	strcat(cache_path,"/.cache/turbofetch");
+	if (file_exists(cache_path)) {
+		FILE* cache = fopen(cache_path,"r");
+		fgets(gpu,249,cache);
+		gpu[strlen(gpu)-1] = 0;
+		fclose(cache);
+		return;
+	}
+
     char buf[250], *device_class;
 
     struct pci_access *pacc;
@@ -327,6 +374,10 @@ void get_gpu(void) {
     if (strstr(gpu,"Advanced Micro Devices, Inc. ")!=NULL) {
         trim_left(gpu,29);
     }
+
+	FILE* cache = fopen(cache_path,"w");
+	fprintf(cache,"%s",gpu);
+	fclose(cache);
 }
 
 void get_uptime(void) {
