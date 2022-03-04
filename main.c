@@ -8,6 +8,8 @@
 #include <pci/pci.h>
 #include <errno.h>
 
+#include "macros.h"
+
 // colors
 #define COL_CYAN    "\x1b[36m"
 #define COL_MAGENTA "\x1b[35m"
@@ -90,14 +92,14 @@ int folder_exists(char *filepath) {
 	}
 	else if (ENOENT == errno) {
 		if (mkdir(filepath,0777) == -1) {
-			fprintf(stderr,"Error accessing directory at: %d (%s)"
+			err_log("Error accessing directory at: %d (%s)"
 				,filepath,errno);
 			return 0;
 		}
 		else return 1;
 	}
 	else {
-		fprintf(stderr,"Error accessing directory at: %d (%s)"
+		err_log("Error accessing directory at: %d (%s)"
 			,filepath,errno);
 		return 0;
 	}
@@ -118,7 +120,7 @@ void parse(char *dest, char *cmd) {
 
 	// popen exception
 	if (0 == (tmp = (FILE*)popen(cmd,"r"))) {
-		fprintf(stderr,"ERROR: popen(\"%s\",\"r\") failed.\n",cmd);
+		err_log("ERROR: popen(\"%s\",\"r\") failed.",cmd);
 		return;
 	}
 
@@ -152,7 +154,7 @@ void get_hostname(void) {
 	
 	FILE* f_hostname;
 	if (0 == (f_hostname = fopen("/etc/hostname","r"))) {
-		fprintf(stderr,"Failed to open /etc/hostname\n");
+		err_log("Failed to open /etc/hostname");
 		return;
 	}
 
@@ -167,7 +169,7 @@ void get_hostname(void) {
 void get_os(void) {
 	FILE* f_os_release;
 	if (0 == (f_os_release = fopen("/etc/os-release","r"))) {
-		fprintf(stderr,"Failed to open /etc/os-release\n");
+		err_log("Failed to open /etc/os-release");
 		return;
 	}
 	
@@ -190,7 +192,7 @@ void get_os(void) {
 void get_kernel(void) {
 	FILE* f_version;
 	if (0 == (f_version = fopen("/proc/version","r"))) {
-		fprintf(stderr,"Failed to open /proc/version\n");
+		err_log("Failed to open /proc/version");
 		return;
 	}
 	
@@ -213,7 +215,7 @@ void get_packages_pacman(void) {
 	DIR* fd;
 
 	if ((fd = opendir("/var/lib/pacman/local")) == NULL) {
-		fprintf(stderr, "Error opening /var/lib/pacman/local\n");
+		err_log( "Error opening /var/lib/pacman/local");
 		return;
 	}
 
@@ -257,28 +259,30 @@ void get_packages(void) {
 void get_memory(void) {
 	FILE* meminfo;
 	if (0 == (meminfo = fopen("/proc/meminfo","r"))) {
-		fprintf(stderr,"Failed to open /proc/meminfo\n");
+		err_log("Failed to open /proc/meminfo");
 		return;
 	}
+
+	int total, shared, free, cached, buffers, sreclaimable;
 
 	int mem_used_mb, mem_total_mb;
 	char str[100];
 
 	while (fgets(str,99,meminfo)!=NULL) {
 		char *ptr = str;
-		if (strstr(str,"MemTotal")!=NULL) {
-			while (!(*ptr>='0'&&*ptr<='9')) ++ptr;
-			trim_right(ptr,4);
-			mem_total_mb = atoi(ptr)/1024;
-			snprintf(memory_total,100,"%dMB\0",mem_total_mb);
-		}
-		if (strstr(str,"MemAvailable")!=NULL) {
-			while (!(*ptr>='0'&&*ptr<='9')) ++ptr;
-			trim_right(ptr,4);
-			mem_used_mb = mem_total_mb-atoi(ptr)/1024;
-			snprintf(memory_used,100,"%dMB\0",mem_used_mb);
-		}
+		sscanf(str, "MemTotal: %d", &total);
+		sscanf(str, "Shmem: %d", &shared);
+		sscanf(str, "MemFree: %d", &free);
+		sscanf(str, "Buffers: %d", &buffers);
+		sscanf(str, "Cached: %d", &cached);
+		sscanf(str, "SReclaimable: %d", &sreclaimable);
 	}
+
+	mem_used_mb = (total+shared-free-cached-buffers-sreclaimable)/1024;
+	mem_total_mb = total/1024;
+	
+	snprintf(memory_used,100,"%dMB\0",mem_used_mb);
+	snprintf(memory_total,100,"%dMB\0",mem_total_mb);
 
 	fclose(meminfo);
 }
@@ -286,7 +290,7 @@ void get_memory(void) {
 void get_swap(void) {
 	FILE* meminfo;
 	if (0 == (meminfo = fopen("/proc/meminfo","r"))) {
-		fprintf(stderr,"Failed to open /proc/meminfo\n");
+		err_log("Failed to open /proc/meminfo");
 		return;
 	}
 
@@ -315,7 +319,7 @@ void get_swap(void) {
 void get_processor(void) {
 	FILE* cpuinfo;
 	if (0 == (cpuinfo = fopen("/proc/cpuinfo","r"))) {
-		fprintf(stderr,"Failed to open /proc/cpuinfo\n");
+		err_log("Failed to open /proc/cpuinfo");
 		return;
 	}
 
@@ -383,7 +387,7 @@ void get_gpu(void) {
 void get_uptime(void) {
 	FILE* f_uptime;
 	if (0 == (f_uptime = fopen("/proc/uptime","r"))) {
-		fprintf(stderr,"Failed to open /proc/uptime\n");
+		err_log("Failed to open /proc/uptime");
 		return;
 	}
 	double total_seconds_up;
@@ -411,7 +415,7 @@ void get_uptime(void) {
 void check_zram(void) {
 	FILE* zram;
 	if (0 == (zram = fopen("/sys/module/zram/initstate","r"))) {
-		fprintf(stderr,"Failed to open /sys/module/zram/initstate\n");
+		err_log("Failed to open /sys/module/zram/initstate");
 		return;
 	}
 
