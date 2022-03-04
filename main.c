@@ -344,7 +344,7 @@ void get_gpu(void) {
 	if (file_exists(cache_path)) {
 		FILE* cache = fopen(cache_path,"r");
 		fgets(gpu,249,cache);
-		gpu[strlen(gpu)-1] = 0;
+		gpu[strlen(gpu)] = 0;
 		fclose(cache);
 		return;
 	}
