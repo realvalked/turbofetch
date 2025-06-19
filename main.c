@@ -23,15 +23,15 @@
 #define COL_BORDER  COL_RED // used for border
 
 // declared strings here for us to copy into
-static char hostname[100];
-static char os_release[100];
-static char kernel[100];
-static char packages[100];
-static char memory_used[100], memory_total[100];
-static char swap_used[100], swap_total[100], swap_or_zram[100] = "Swap";
-static char processor[100];
-static char gpu[250]; // gpu name can be quite long, so i declared this one with a larger size
-static char uptime[100];
+static char hostname[101];
+static char os_release[101];
+static char kernel[101];
+static char packages[101];
+static char memory_used[101], memory_total[101];
+static char swap_used[101], swap_total[101], swap_or_zram[101] = "Swap";
+static char processor[101];
+static char gpu[251]; // gpu name can be quite long, so i declared this one with a larger size
+static char uptime[101];
 
 // functions to pipe command output into string so we can print it out
 int folder_exists(char *filepath);
