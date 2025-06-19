@@ -50,7 +50,7 @@ void get_processor(void);
 void get_gpu(void);
 void get_uptime(void);
 void check_zram(void);
-void get_info(int varg);
+void* get_info(void* varg);
 
 int main(void) {
 	// number of threads
@@ -58,7 +58,7 @@ int main(void) {
 
 	// get hostname, os, kernel, etc. simultaneously via multithreading
 	for (int i = 0; i < 10; i++) {
-		pthread_create(&thr[i],NULL,get_info,i);
+		pthread_create(&thr[i],NULL,get_info,&i);
 	}
 
 	// wait only for the most time-consuming threads, this way we can finish running the script as quickly as possible
@@ -427,8 +427,9 @@ void check_zram(void) {
 	fclose(zram);
 }
 
-void get_info(int varg) {
-	switch(varg) {
+void* get_info(void* p_arg) {
+	int arg = *(int*)p_arg;
+	switch(arg) {
 		case 0:
 			get_hostname();
 			break;
@@ -460,4 +461,5 @@ void get_info(int varg) {
 			check_zram();
 			break;
 	}
+	return NULL;
 }
