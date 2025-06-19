@@ -55,10 +55,11 @@ void* get_info(void* varg);
 int main(void) {
 	// number of threads
 	pthread_t thr[10];
+	int thr_idx[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
 	// get hostname, os, kernel, etc. simultaneously via multithreading
 	for (int i = 0; i < 10; i++) {
-		pthread_create(&thr[i],NULL,get_info,&i);
+		pthread_create(&thr[i],NULL,get_info,thr_idx+i);
 	}
 
 	// wait only for the most time-consuming threads, this way we can finish running the script as quickly as possible
